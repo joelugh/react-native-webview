@@ -405,7 +405,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public void setMessagingModuleName(WebView view, String moduleName) {
     ((RNCWebView) view).setMessagingModuleName(moduleName);
   }
-   
+
   @ReactProp(name = "incognito")
   public void setIncognito(WebView view, boolean enabled) {
     // Remove all previous cookies
@@ -655,7 +655,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         public Bitmap getDefaultVideoPoster() {
           return Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
         }
-        
+
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
           if (mVideoView != null) {
@@ -895,13 +895,16 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       String[] requestedResources = request.getResources();
       ArrayList<String> permissions = new ArrayList<>();
       ArrayList<String> grantedPermissions = new ArrayList<String>();
+      boolean hasResourceProtectedMediaId = false;
       for (int i = 0; i < requestedResources.length; i++) {
         if (requestedResources[i].equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
           permissions.add(Manifest.permission.RECORD_AUDIO);
         } else if (requestedResources[i].equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
           permissions.add(Manifest.permission.CAMERA);
+        } else if (requestedResources[i].equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
+          hasResourceProtectedMediaId = true;
         }
-        // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
+        // TODO: RESOURCE_MIDI_SYSEX
       }
 
       for (int i = 0; i < permissions.size(); i++) {
@@ -913,6 +916,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         } else if (permissions.get(i).equals(Manifest.permission.CAMERA)) {
           grantedPermissions.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
         }
+      }
+
+      // Temporary fix - we automatically grant playing protected media (EME APIs)
+      // From https://github.com/mozilla-mobile/android-components/issues/1128
+      if (hasResourceProtectedMediaId) {
+        grantedPermissions.add(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID);
       }
 
       if (grantedPermissions.isEmpty()) {
